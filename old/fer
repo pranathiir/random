@@ -1,38 +1,39 @@
 def is_ref(matrix):
-row = len(matrix)
-col = len(matrix[0])
-leading_zeros = []
-for i in range(row):
-leading_zero_count = 0
+  row = len(matrix)
+  col = len(matrix[0])
+  leading_zeros = []
+  for i in range(row):
+    leading_zero_count = 0
+    for j in range(col):
+      if matrix[i][j] != 0:
+         break
+      leading_zero_count += 1
+    leading_zeros.append(leading_zero_count)
+  for i in range(row - 1):
+    if leading_zeros[i] > leading_zeros[i + 1]:
+      return False
+  return True
 
-for j in range(col):
-if matrix[i][j] != 0:
-break
-leading_zero_count += 1
-leading_zeros.append(leading_zero_count)
-for i in range(row - 1):
-if leading_zeros[i] > leading_zeros[i + 1]:
-return False
-return True
 def is_rref(matrix):
-row = len(matrix)
-col = len(matrix[0])
-if not is_ref(matrix):
-return False
-# Check for leading ones
-for i in range(row):
-leading_one_found = False
-for j in range(col):
-if matrix[i][j] == 1:
-leading_one_found = True
-elif matrix[i][j] != 0:
-return False
-if leading_one_found == False:
-return False
-return True
+  row = len(matrix)
+  col = len(matrix[0])
+  if not is_ref(matrix):
+    return False
+  # Check for leading ones
+  for i in range(row):
+    leading_one_found = False
+    for j in range(col):
+      if matrix[i][j] == 1:
+        leading_one_found = True
+      elif matrix[i][j] != 0:
+        return False
+    if leading_one_found == False:
+      return False
+  return True
+
 def print_matrix(matrix):
-for row in matrix:
-print(row)
+  for row in matrix:
+    print(row)
 matrix1 = [[1, 2, 0, 3, 0],
 [0, 0, 1, 1, 0],
 [0, 0, 0, 0, 1],
