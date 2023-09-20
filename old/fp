@@ -1,0 +1,29 @@
+import numpy as np
+from sympy import *
+
+def inputfn():
+    x = symbols('x')
+    expr = input("function: ")
+    expr = sympify(expr)
+    a = float(input("interval: "))
+    return expr, a
+
+def fixedPointIteration(ex, a):
+    x = symbols('x')
+    count = 0
+    while True:
+        f1 = ex.subs(x, a)
+        m = a - f1
+        print("iteration" + str(count) + " - ")
+        print("{:.4f}   {:.4f}   {:.4f}".format(float(a), float(f1), float(m)))
+        if abs(m-a) < 0.001:
+            break
+        a = m
+        count += 1
+    print('\nroot: ')
+    print("root's value ' : {:.4f}".format(float(a)))
+
+ex, a = inputfn()
+x = symbols('x')
+sol = fixedPointIteration(ex, a)
+plot(ex)
