@@ -1,0 +1,23 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+x = np.array([0, 1, 2])
+y = np.array([0, 1, 20])
+
+A = np.vstack([x**2, x, np.ones(len(x))]).T
+coeffs = np.linalg.solve(A, y)
+a, b, c = coeffs
+print(f"The equation of the parabola is: y = {a:.2f}x^2 + {b:.2f}x + {c:.2f}")
+
+x_values = np.linspace(0, 2, 100)
+y_values = a * x_values**2 + b * x_values + c
+
+plt.figure(figsize=(8, 6))
+plt.plot(x_values, y_values, label=f'y = {a:.2f}x^2 + {b:.2f}x + {c:.2f}', color='blue')
+plt.scatter(x, y, color='red', label='Given Points')
+plt.xlabel('x')
+plt.ylabel('y')
+plt.title('Parabola Passing Through Given Points')
+plt.legend()
+plt.grid(True)
+plt.show()
