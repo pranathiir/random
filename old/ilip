@@ -1,0 +1,44 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+def inverse_lagrange_interpolation(y_inv, x_values, y_values):
+    n = len(x_values)
+    result = 0.0
+
+    for i in range(n):
+        term = 1.0
+        for j in range(n):
+            if i != j:
+                term *= (y_inv - y_values[j]) / (y_values[i] - y_values[j])
+        result += term * x_values[i]
+
+    return result
+
+n = int(input("Enter the number of data points: "))
+x_values = []
+y_values = []
+
+for i in range(n):
+    x = float(input(f"Enter x{i}: "))
+    y = float(input(f"Enter y{i}: "))
+    x_values.append(x)
+    y_values.append(y)
+
+
+y_inv = float(input("Enter the value of y for inverse interpolation: "))
+x_inv = inverse_lagrange_interpolation(y_inv, x_values, y_values)
+print(f"The interpolated x value corresponding to y = {y_inv} is approximately x = {x_inv:.2f}")
+
+x_plot = np.linspace(min(x_values), max(x_values), 1000)
+y_plot = [inverse_lagrange_interpolation(y, x_values, y_values) for y in x_plot]
+
+
+plt.plot(x_values, y_values, label='Interpolated Polynomial')
+plt.scatter(x_values, y_values, color='red', label='Data Points', marker='o')
+plt.scatter(x_inv, y_inv,color='green')
+plt.xlabel('x')
+plt.ylabel('y')
+plt.legend()
+plt.title('Inverse Lagrange Interpolation')
+plt.grid(True)
+plt.show()
