@@ -1,0 +1,43 @@
+import numpy as np
+from sympy import *
+
+def inputfn():
+    x = symbols('x')
+    expr = input("function: ")
+    expr = sympify(expr)
+    a, b = map(float, input("interval: ").split())
+    return expr, a, b
+
+def newtonRaphsonMethod(ex, a):
+    x = symbols('x')
+    f1 = ex.subs(x, a)
+    ex1 = diff(ex, x)
+    f2 = ex1.subs(x, a)
+    h = f1/f2
+    count = 0
+    while(abs(h) >= 0.001):
+        f1 = ex.subs(x, a)
+        ex1 = diff(ex, x)
+        f2 = ex1.subs(x, a)
+        h = f1/f2
+        m = a-h
+        print("iteration" + str(count) + " - ")
+        print("a         h            f(a)       f'(a)      a(next) ")
+        print(str("%.4f" % a) + "       " + str("%.4f" % h) + "       " + str("%.4f" % f1) + "       " + str("%.4f" % f2) + "       " + str("%.4f" % m))
+        a = m
+        count += 1
+    print('\nroot: ')
+    print("value's root: ", "%.4f" % a)
+
+ex, a, b = inputfn()
+x = symbols('x')
+f1 = ex.subs(x, a)
+f2 = ex.subs(x, b)
+
+if(f1 == 0):
+    print('a whose value is ' + str(a) + ' is the root ')
+elif(f2 == 0):
+    print('b whose value is ' + str(b) + ' is the root ')
+else:
+    sol = newtonRaphsonMethod(ex, a)
+    p1 = plot(ex)
