@@ -1,0 +1,53 @@
+# QUESTION 1 : MILNE'S AND ADAM BASHFORD
+
+import numpy as np
+
+# Differential equation function
+def f(x, y):
+    return (1 + x**2) * y**2
+
+# Milne's Predictor-Corrector method
+def milne_predictor_corrector(x0, y0, xn, n):
+    h = (xn - x0) / n
+    x = x0
+    y = y0
+    for i in range(3):
+        k1 = h * f(x, y)
+        k2 = h * f(x + h, y + k1)
+        k3 = h * f(x + 2*h, y + 2*k2)
+        k4 = h * f(x + 3*h, y + 3*k3)
+        y = y + h/24 * (9*k4 + 19*k3 - 5*k2 + k1)
+        x += h
+    return x, y
+
+# Adams-Bashforth method
+def adams_bashforth(x, y, h, n):
+    # Calculate y values using Adams-Bashforth
+    for i in range(4, n + 1):
+        y_pred = y[i - 1] + (h/24) * (55 * f(x[i - 1], y[i - 1]) - 59 * f(x[i - 2], y[i - 2]) + 37 * f(x[i - 3], y[i - 3]) - 9 * f(x[i - 4], y[i - 4]))
+        x.append(x[i - 1] + h)
+        y.append(y_pred)
+    return x, y
+
+# Initial values
+x0 = 0
+y0 = 1
+xn = 0.4
+
+# Number of steps for Milne's method
+n_milne = 4
+
+# Number of steps for Adams-Bashforth method
+n_adams = 4
+
+# Use Milne's predictor-corrector method
+x_milne, y_milne = milne_predictor_corrector(x0, y0, xn, n_milne)
+
+# Use Adams-Bashforth method
+x_adams = [x0, x0 + 0.1, x0 + 0.2, x0 + 0.3]
+y_adams = [y0, 1.06, 1.12, 1.21]
+x_adams, y_adams = adams_bashforth(x_adams, y_adams, 0.1, n_adams)
+
+# Print the results
+print(f'Milne\'s Predictor-Corrector method: y(0.4) is approximately {y_milne:.4f}')
+print(f'Adams-Bashforth method: y(0.4) is approximately {y_adams[-1]:.4f}')
