@@ -1,0 +1,60 @@
+# QUESTION 2 : RUNGE - KUTTA THIRD METHOD, MILNE'S AND ADAM BASHFORD
+import numpy as np
+
+def f(x, y):
+    return x * y + x**2
+
+# Runge-Kutta third-order method
+def runge_kutta_third_order(x0, y0, xn, n):
+    h = (xn - x0) / n
+    x = x0
+    y = y0
+    for i in range(n):
+        k1 = h * f(x, y)
+        k2 = h * f(x + h/2, y + k1/2)
+        k3 = h * f(x + h, y - k1 + 2*k2)
+        y = y + (k1 + 4*k2 + k3) / 6
+        x += h
+    return x, y
+
+# Initial values
+x0 = 0
+y0 = 1
+
+# Solve using Runge-Kutta third-order method
+x1, y1 = runge_kutta_third_order(x0, y0, 0.1, 1)
+x2, y2 = runge_kutta_third_order(x1, y1, 0.2, 1)
+x3, y3 = runge_kutta_third_order(x2, y2, 0.3, 1)
+
+# Continue the solution at x = 0.4 using Milne's predictor-corrector method
+def milne_predictor_corrector(x0, y0, xn, n):
+    h = (xn - x0) / n
+    x = x0
+    y = y0
+    for i in range(3):
+        k1 = h * f(x, y)
+        k2 = h * f(x + h/2, y + k1/2)
+        k3 = h * f(x + h, y - k1 + 2*k2)
+        k4 = h * f(x + 2*h, y - 3*k1 + 6*k2 - 3*k3)
+        y = y + h/24 * (k1 + 4*k2 + k3)
+        x += h
+    return x, y
+
+x4, y4 = milne_predictor_corrector(x3, y3, 0.4, 1)
+
+# Continue the solution at x = 0.4 using Adams-Bashforth method
+def adams_bashforth(x, y, h, n):
+    for i in range(3, n + 1):
+        y_pred = y[i - 1] + h/24 * (55 * f(x[i - 1], y[i - 1]) - 59 * f(x[i - 2], y[i - 2]) + 37 * f(x[i - 3], y[i - 3]) - 9 * f(x[i - 4], y[i - 4]))
+        x.append(x[i - 1] + h)
+        y.append(y_pred)
+    return x, y
+
+x_adams = [x0, x1, x2, x3]
+y_adams = [y0, y1, y2, y3]
+x_adams, y_adams = adams_bashforth(x_adams, y_adams, 0.1, 4)
+
+# Print the results
+print(f'Runge-Kutta at x = 0.4: y(0.4) is approximately {y3:.4f}')
+print(f'Milne\'s Predictor-Corrector at x = 0.4: y(0.4) is approximately {y4:.4f}')
+print(f'Adams-Bashforth at x = 0.4: y(0.4) is approximately {y_adams[-1]:.4f}')
