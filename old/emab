@@ -1,66 +1,66 @@
 #EULER, MILNE'S AND ADAM BASHFORD
 import numpy as np
-
 def f(x, y):
     return (2 * x * y) / (1 + x**2)
 
-# Euler's method
-def euler_method(x0, y0, xn, n):
-    h = (xn - x0) / n
-    x = x0
-    y = y0
-    for i in range(n):
-        y += h * f(x, y)
-        x += h
-    return x, y
-
-# Milne's Predictor-Corrector method
-def milne_predictor_corrector(x0, y0, xn, n):
-    h = (xn - x0) / n
-    x = x0
-    y = y0
-    for i in range(3):
-        k1 = h * f(x, y)
-        k2 = h * f(x + h/2, y + k1/2)
-        k3 = h * f(x + h, y - k1 + 2*k2)
-        k4 = h * f(x + 2*h, y - 3*k1 + 6*k2 - 3*k3)
-        y = y + h/24 * (k1 + 4*k2 + k3)
-        x += h
-    return x, y
-
-# Adams-Bashforth method
-def adams_bashforth(x, y, h, n):
-    for i in range(3, n + 1):
-        y_pred = y[i - 1] + h/24 * (55 * f(x[i - 1], y[i - 1]) - 59 * f(x[i - 2], y[i - 2]) + 37 * f(x[i - 3], y[i - 3]) - 9 * f(x[i - 4], y[i - 4]))
-        x.append(x[i - 1] + h)
-        y.append(y_pred)
-    return x, y
-
-# Initial values
 x0 = 0
 y0 = 0
+h_euler = 0.1
+h_other = 0.1
+x_target = 0.4
 
-# Number of steps for Euler's method
-n_euler = 1
+num_steps_euler = int((x_target - x0) / h_euler)
+num_steps_other = int((x_target - x0) / h_other)
 
-# Number of steps for Milne's and Adams-Bashforth methods
-n_milne_adams = 3
+x_values_euler = [x0]
+y_values_euler = [y0]
 
-# Calculate y(0.1), y(0.2), and y(0.3) using Euler's method
-x1, y1 = euler_method(x0, y0, 0.1, n_euler)
-x2, y2 = euler_method(x1, y1, 0.2, n_euler)
-x3, y3 = euler_method(x2, y2, 0.3, n_euler)
+for _ in range(num_steps_euler):
+    x0 += h_euler
+    y0 = y0 + h_euler * f(x0, y0)
+    x_values_euler.append(x0)
+    y_values_euler.append(y0)
 
-# Continue the solution at x = 0.4 using Milne's predictor-corrector method
-x4, y4 = milne_predictor_corrector(x3, y3, 0.4, n_milne_adams)
+def milne_predictor_corrector(x_values, y_values, h):
+    n = len(x_values)
+    y_predicted = y_values[n - 1] + (4 * h / 3) * (
+        2 * f(x_values[n - 1], y_values[n - 1]) -
+        f(x_values[n - 2], y_values[n - 2]) +
+        2 * f(x_values[n - 3], y_values[n - 3])
+    )
+    return y_predicted
 
-# Continue the solution at x = 0.4 using Adams-Bashforth method
-x_adams = [x0, x1, x2, x3]
-y_adams = [y0, y1, y2, y3]
-x_adams, y_adams = adams_bashforth(x_adams, y_adams, 0.1, n_milne_adams)
+def adams_bashforth(x_values, y_values, h):
+    n = len(x_values)
+    y_predicted = y_values[n - 1] + (h / 24) * (
+        55 * f(x_values[n - 1], y_values[n - 1]) -
+        59 * f(x_values[n - 2], y_values[n - 2]) +
+        37 * f(x_values[n - 3], y_values[n - 3]) -
+        9 * f(x_values[n - 4], y_values[n - 4])
+    )
+    return y_predicted
 
-# Print the results
-print(f'Euler at x = 0.3: y(0.3) is approximately {y3:.4f}')
-print(f'Milne\'s Predictor-Corrector at x = 0.4: y(0.4) is approximately {y4:.4f}')
-print(f'Adams-Bashforth at x = 0.4: y(0.4) is approximately {y_adams[-1]:.4f}')
+x_values_milne = x_values_euler.copy()
+y_values_milne = y_values_euler.copy()
 
+while x_values_milne[-1] < x_target:
+    x0 = x_values_milne[-1] + h_other
+    y0 = milne_predictor_corrector(x_values_milne[-4:], y_values_milne[-4:], h_other)
+    x_values_milne.append(x0)
+    y_values_milne.append(y0)
+
+x_values_adams = x_values_euler.copy()
+y_values_adams = y_values_euler.copy()
+
+while x_values_adams[-1] < x_target:
+    x0 = x_values_adams[-1] + h_other
+    y0 = adams_bashforth(x_values_adams[-4:], y_values_adams[-4:], h_other)
+    x_values_adams.append(x0)
+    y_values_adams.append(y0)
+
+print("Values at x = 0.1, 0.2, and 0.3 using Euler's method:")
+for x, y in zip([0.1, 0.2, 0.3], [y_values_euler[int(x * 10)] for x in [0.1, 0.2, 0.3]]):
+    print(f"x = {x:.1f}, y = {y:.4f}")
+
+print(f"y(0.4) by Milne's Predictor-Corrector: {y_values_milne[-1]:.4f}")
+print(f"y(0.4) by Adams-Bashforth: {y_values_adams[-1]:.4f}")
