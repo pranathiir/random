@@ -1,62 +1,66 @@
 #RUNGE - KUTTA FOURTH METHOD, MILNE'S AND ADAM BASHFORD
 import numpy as np
 
-# Define the differential equation function
 def f(x, y):
     return (2 * x * y) / (1 + x**2)
 
-# Runge-Kutta fourth-order method
-def runge_kutta_fourth_order(x0, y0, xn, n):
-    h = (xn - x0) / n
-    x = x0
-    y = y0
-    for i in range(n):
-        k1 = h * f(x, y)
-        k2 = h * f(x + h/2, y + k1/2)
-        k3 = h * f(x + h/2, y + k2/2)
-        k4 = h * f(x + h, y + k3)
-        y = y + (k1 + 2*k2 + 2*k3 + k4) / 6
-        x += h
-    return x, y
-
-# Initial values
 x0 = 0
 y0 = 0
+h = 0.1
+x_target = 0.4
+num_steps_rk4 = int((x_target - x0) / h)
 
-# Solve using Runge-Kutta fourth-order method
-x1, y1 = runge_kutta_fourth_order(x0, y0, 0.1, 1)
-x2, y2 = runge_kutta_fourth_order(x1, y1, 0.2, 1)
-x3, y3 = runge_kutta_fourth_order(x2, y2, 0.3, 1)
+def runge_kutta_fourth(x, y, h):
+    k1 = h * f(x, y)
+    k2 = h * f(x + h/2, y + k1/2)
+    k3 = h * f(x + h/2, y + k2/2)
+    k4 = h * f(x + h, y + k3)
+    return y + (k1 + 2*k2 + 2*k3 + k4) / 6
 
-# Continue the solution at x = 0.4 using Milne's predictor-corrector method
-def milne_predictor_corrector(x0, y0, xn, n):
-    h = (xn - x0) / n
-    x = x0
-    y = y0
-    for i in range(3):
-        k1 = h * f(x, y)
-        k2 = h * f(x + h/2, y + k1/2)
-        k3 = h * f(x + h, y - k1 + 2*k2)
-        k4 = h * f(x + 2*h, y - 3*k1 + 6*k2 - 3*k3)
-        y = y + h/24 * (k1 + 4*k2 + k3)
-        x += h
-    return x, y
+x_values_rk4 = [x0]
+y_values_rk4 = [y0]
 
-x4, y4 = milne_predictor_corrector(x3, y3, 0.4, 1)
+for _ in range(num_steps_rk4):
+    x0 += h
+    y0 = runge_kutta_fourth(x0, y0, h)
+    x_values_rk4.append(x0)
+    y_values_rk4.append(y0)
 
-# Continue the solution at x = 0.4 using Adams-Bashforth method
-def adams_bashforth(x, y, h, n):
-    for i in range(3, n + 1):
-        y_pred = y[i - 1] + h/24 * (55 * f(x[i - 1], y[i - 1]) - 59 * f(x[i - 2], y[i - 2]) + 37 * f(x[i - 3], y[i - 3]) - 9 * f(x[i - 4], y[i - 4]))
-        x.append(x[i - 1] + h)
-        y.append(y_pred)
-    return x, y
+def milne_predictor_corrector(x_values, y_values, h):
+    n = len(x_values)
+    y_predicted = y_values[n - 1] + (4 * h / 3) * (
+        2 * f(x_values[n - 1], y_values[n - 1]) -
+        f(x_values[n - 2], y_values[n - 2]) +
+        2 * f(x_values[n - 3], y_values[n - 3])
+    )
+    return y_predicted
 
-x_adams = [x0, x1, x2, x3]
-y_adams = [y0, y1, y2, y3]
-x_adams, y_adams = adams_bashforth(x_adams, y_adams, 0.1, 4)
+def adams_bashforth(x_values, y_values, h):
+    n = len(x_values)
+    y_predicted = y_values[n - 1] + (h / 24) * (
+        55 * f(x_values[n - 1], y_values[n - 1]) -
+        59 * f(x_values[n - 2], y_values[n - 2]) +
+        37 * f(x_values[n - 3], y_values[n - 3]) -
+        9 * f(x_values[n - 4], y_values[n - 4])
+    )
+    return y_predicted
 
-# Print the results
-print(f'Runge-Kutta at x = 0.3: y(0.3) is approximately {y3:.4f}')
-print(f'Milne\'s Predictor-Corrector at x = 0.4: y(0.4) is approximately {y4:.4f}')
-print(f'Adams-Bashforth at x = 0.4: y(0.4) is approximately {y_adams[-1]:.4f}')
+y_values_at_x = {}
+for x in [0.1, 0.2, 0.3]:
+    while x_values_rk4[-1] < x:
+        x0 += h
+        y0 = runge_kutta_fourth(x0, y0, h)
+        x_values_rk4.append(x0)
+        y_values_rk4.append(y0)
+    y_values_at_x[x] = y0
+
+y_milne_predictor_corrector = milne_predictor_corrector(x_values_rk4, y_values_rk4, h)
+y_adams_bashforth = adams_bashforth(x_values_rk4, y_values_rk4, h)
+
+print("Values at x = 0.1, 0.2, and 0.3 using Runge-Kutta fourth-order method:")
+for x, y in y_values_at_x.items():
+    print(f"x = {x:.1f}, y = {y:.4f}")
+
+print(f"y(0.4) by Milne's Predictor-Corrector: {y_milne_predictor_corrector:.4f}")
+print(f"y(0.4) by Adams-Bashforth: {y_adams_bashforth:.4f}")
+
