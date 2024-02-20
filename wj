@@ -1,0 +1,47 @@
+from collections import deque
+
+def waterJugBFS(x, y, z):
+  visited = set()
+  queue = deque([(0, 0)])
+  while queue:
+    jugA, jugB = queue.popleft()
+    print('jug a: ', jugA)
+    print('jug b: ', jugB)
+    #print(queue)
+    if jugA==z or jugB==z or jugA+jugB==z:
+      return True
+    if (jugA, jugB) in visited:
+      continue
+    visited.add((jugA, jugB))
+    if jugA < x:
+      #fill jug a
+      queue.append((x, jugB))
+    if jugB < y:
+      #fill jug b
+      queue.append((jugA, y))
+    if jugA > 0:
+      #empty jug a
+      queue.append((0, jugB))
+    if jugB > 0:
+      #empty jug b
+      queue.append((jugA, 0))
+    if jugA+jugB >= y:
+      queue.append((jugA-(y-jugB), y))
+    else:
+      queue.append((0, jugA+jugB))
+    if jugA+jugB >= x:
+      #from b to a
+      queue.append((x, jugB-(x-jugA)))
+    else:
+      queue.append((jugA+jugB, 0))
+    print(queue)
+  return False
+
+x = int(input('water capacity in first jug: '))
+y = int(input('water capacity in second jug: '))
+z = int(input('num of liters of water to be measured: '))
+
+if waterJugBFS(x, y, z):
+    print(f'{z} liters of water can be measured using {x}-liter and {y}-liter jugs')
+else:
+    print(f'{z} liters of water cannot be measured using {x}-liter and {y}-liter jugs')
