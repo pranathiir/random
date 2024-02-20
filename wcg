@@ -1,0 +1,95 @@
+entity = ['goat', 'wolf', 'cabbage']
+path = []
+
+def eats(x, y):
+    if x == 'goat' and y == 'cabbage':
+        return True
+    elif x == 'wolf' and y == 'goat':
+        return True
+    else:
+        return False
+
+def safe_pair(x, y):
+    if eats(x, y) or eats(y, x):
+        return False
+    else:
+        return True
+
+def state_of(who, state):
+    try:
+        return state[who]
+    except KeyError:
+        state[who] = False
+        return False
+
+def safe_state(state):
+    if state_of('man', state) == state_of('goat', state):
+        return True
+    elif state_of('goat', state) == state_of('wolf', state):
+        return False
+    elif state_of('goat', state) == state_of('cabbage', state):
+        return False
+    else:
+        return True
+
+def move(who, state):
+    if state[who] == 'left':
+        state[who] = 'right'
+    else:
+        state[who] = 'left'
+    return state
+def goal_reach(state):
+    if not state:
+        return False
+    return (state_of('man', state)=='right' and
+            state_of('goat', state)=='right' and
+            state_of('wolf', state)=='right' and
+            state_of('cabbage',state)=='right')
+
+def check_add_child(child, list_states):
+    if safe_state(child):
+	    list_states.append(child)
+    return list_states
+
+def expand_states(state):
+    children = []
+    child = state.copy()
+    move('man', child)
+    check_add_child(child, children)
+    for ent in entity:
+        if state_of(ent, state) == state_of('man', state):
+            child = state.copy()
+            move('man', child)
+            move(ent, child)
+            check_add_child(child, children)
+        #else:
+	#print "unsafe state", child
+    return children
+
+def search_sol(state):
+    path.append(state)
+    next = state.copy()
+    while next and not goal_reach(next):
+        nl = expand_states(next)
+        next = {}
+        for child in nl:
+            if not (child in path):
+                next = child
+                path.append(next)
+                break
+    return next
+
+initial_state = {}
+initial_state['man'] = 'left'
+for e in entity:
+    initial_state[e] = 'left'
+
+#print initial_state
+#{'cabbage': 'left', 'wolf': 'left', 'goat': 'left', 'man': 'left'}
+print("Expanding initial state: ")
+print(expand_states(initial_state))
+print("Searching for a solution from the initial state: ")
+print(search_sol(initial_state))
+print("The full path is: ")
+for s in path:
+    print(s)
