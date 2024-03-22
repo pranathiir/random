@@ -1,0 +1,38 @@
+#first and follow
+from collections import defaultdict
+from collections import OrderedDict
+terminals = ['i','(',')','+','$','*','e','/','-']
+l1=defaultdict(list)
+l2=defaultdict(list)
+def first(G):
+    for k in G:
+        for v in G[k]:
+            if v[0] in terminals:
+                l1[k].append(v[0])
+            if v[0] not in terminals:
+                print('not: ', v[0])
+                print('extend: ', l1[v[0]])
+                l1[k].extend(l1[v[0]])
+
+def follow(G):
+    for k in G:
+        for v in G[k]:
+            if k == 'E':
+                l2[k].append('$')
+            if v[-1] in terminals:
+                if len(v) >= 2 and v[-2] not in terminals:
+                    l2[v[-2]].extend(v[-1])
+            if v[-1] not in terminals:
+                if v[-1] == k:
+                    if 'e' in l1[v[-1]]:
+                        l2[v[-2]].extend(l1[v[-1]])
+                        l2[v[-2]].pop()
+                else:
+                    l2[v[-1]].append(l2[k])
+Grammer = {'F': ['i','(E)'], 'S': ['*SF', '/FS' , 'e'] ,'T':['FS'], 'R': ['+RT', '-TR', 'e'] , 'E':['TR']}
+res = dict(reversed(list(Grammer.items())))
+# print(res)
+first(Grammer)
+print("FIRST:",l1)
+follow(res)
+print("FOLLOW:",l2)
