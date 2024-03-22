@@ -1,0 +1,42 @@
+def remove_left_recursion(grammar):
+    non_terminals = list(grammar.keys())
+    new_grammar = {}
+
+    for A in non_terminals:
+        new_grammar[A] = []
+        alpha = []
+        beta = []
+
+        for production in grammar[A]:
+            if production[0] == A:
+                alpha.append(production[1:])
+            else:
+                beta.append(production)
+
+        if len(alpha) > 0:
+            new_non_terminal = A + "'"
+            new_grammar[new_non_terminal] = [a + new_non_terminal for a in alpha] + ['e']
+            new_grammar[A] = [b + new_non_terminal for b in beta]
+        else:
+            new_grammar[A] = grammar[A]
+
+    return new_grammar
+
+
+def print_grammar(grammar):
+    for non_terminal, productions in grammar.items():
+        print(non_terminal + " -> " + " | ".join(productions))
+
+grammar = {
+    "E" : ["E+T", "T"],
+    "T": ["T*F", "F"],
+    "F": ["id"]
+}
+
+print("Original Grammar:")
+print_grammar(grammar)
+
+new_grammar = remove_left_recursion(grammar)
+
+print("\nGrammar after removing left recursion:")
+print_grammar(new_grammar)
