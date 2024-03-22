@@ -1,0 +1,95 @@
+#Fuzzy Control System example
+import matplotlib.pyplot as plt
+
+#Speed Diff, Acceleration & Throttle Control
+
+height = 1
+membershipVals = {
+  "nm": [31, 61, 95],
+  "ns": [61, 95, 127],
+  "ze": [95, 127, 159],
+  "ps": [127, 159, 191],
+  "pm": [159, 191, 223],
+  "nl": [0, 0, 31, 61],
+  "pl": [191, 223, 255, 280],
+}
+rules = [["nl", "ze", "pl"],
+         ["ze", "nl", "pl"],
+         ["nm", "ze", "pm"],
+         ["ns", "ps", "ps"],
+         ["ps", "ns", "ns"],
+         ["pl", "ze", "nl"],
+         ["ze", "ns", "ps"],
+         ["ze", "nm", "pm"]]
+
+
+def isValidRule(speedRule, speed, accRule, acc):
+    memSpeed = membershipVals[speedRule]
+    memAcc = membershipVals[accRule]
+
+    if memSpeed[0]<=speed and speed<=memSpeed[-1]:
+        if memAcc[0]<=acc and acc<=memAcc[-1]:
+            return True
+    return False
+
+def fuzzyfication(rule, speed, acc):
+    memSpeed = membershipVals[rule[0]]
+    memAcc = membershipVals[rule[1]]
+
+    uSpeed = max(min((speed-memSpeed[0])/(memSpeed[1]-memSpeed[0]), (memSpeed[2]-speed)/(memSpeed[2]-memSpeed[1])), 0)
+    uAcc = max(min((acc-memAcc[0])/(memAcc[1]-memAcc[0]), (memAcc[2]-acc)/(memAcc[2]-memAcc[1])), 0)
+
+    return min(uAcc, uSpeed)
+
+def calcAreaWeightedArea(rule, fuzzVal):
+    throtMem = membershipVals[rule[2]]
+
+    m1 = (1-0)/(throtMem[1]-throtMem[0])
+    m2 = (0-1)/(throtMem[2]-throtMem[1])
+
+    a1 = (fuzzVal-0 + m1*throtMem[0])/m1
+    a2 = (fuzzVal-1 + m2*throtMem[1])/m2
+
+    a = a2-a1
+    b = throtMem[2] - throtMem[0]
+
+    plt.plot([a1, a2], [fuzzVal, fuzzVal])
+
+    area = 0.5*fuzzVal*(a+b)
+    wArea = area*throtMem[1]
+
+    return (area, wArea)
+
+def graph():
+  for label in membershipVals:
+    if len(membershipVals[label]) == 4:
+      plt.plot(membershipVals[label], [0, 1, 1, 0], label=label, color='blue')
+    else:
+      plt.plot(membershipVals[label], [0, 1, 0], label=label, color='green')
+
+def throttleControl(speed, acceleration):
+    wArea = 0
+    areaSum = 0
+
+    for rule in rules:
+        if isValidRule(rule[0], speed, rule[1], acceleration):
+            print(rule)
+            fuzzVal = fuzzyfication(rule, speed, acceleration)
+            x, y = calcAreaWeightedArea(rule, fuzzVal)
+            areaSum += x
+            wArea += y
+
+    print(wArea/areaSum)
+
+def fuzzControl():
+    graph()
+
+    plt.xlabel("throttleControl")
+    plt.ylabel("membershipValue")
+
+    throttleControl(70, 130)
+
+    plt.legend()
+    plt.show()
+
+fuzzControl()
