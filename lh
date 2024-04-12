@@ -1,0 +1,46 @@
+HTable = {'A': 0.2, 'C': 0.3, 'G': 0.3, 'T': 0.2}
+LTable = {'A': 0.3, 'C': 0.2, 'G': 0.2, 'T': 0.3}
+start = {'H': 0.5, 'L': 0.5}
+
+HH = 0.5
+HL = 0.5
+LH = 0.4
+LL = 0.6
+seq = 'GGCACTGAA'
+H = []
+L = []
+stateSeq = []
+
+firstH = start['H'] * HTable[seq[0]]
+firstL = start['L'] * LTable[seq[0]]
+H.append(firstH)
+L.append(firstL)
+
+if firstH > firstL:
+    stateSeq.append('H')
+else:
+    stateSeq.append('L')
+
+for i in range(1, len(seq)):
+    sumH = sumL = 0
+    
+    #trans to H
+    sumH += H[len(H) - 1] * HH * HTable[seq[i]]
+    sumH += L[len(L) - 1] * LH * HTable[seq[i]]
+
+    #trans to L
+    sumL += L[len(L) - 1] * LL * LTable[seq[i]]
+    sumL += H[len(H) - 1] * HL * LTable[seq[i]]
+
+    H.append(sumH)
+    L.append(sumL)
+
+    if sumH > sumL:
+        stateSeq.append('H')
+    else:
+        stateSeq.append('L')
+
+prob = H[len(H) - 1] + L[len(L) - 1]
+
+print("probability of the sequence: ", prob)
+print("expected state sequence: ", "".join(stateSeq))
