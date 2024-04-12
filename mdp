@@ -1,0 +1,55 @@
+#mdp
+import numpy as np
+
+class MarkovDecisionProcess:
+    def __init__(self, numStates, numActions, transProb, rewards, discountFactor=0.9, tolerance=1e-6):
+        self.numStates = numStates
+        self.numActions = numActions
+        self.transProb = transProb
+        self.rewards = rewards
+        self.discountFactor = discountFactor
+        self.tolerance = tolerance
+
+    def valueIteration(self):
+        V = np.zeros(self.numStates)
+        while True:
+            VNew = np.zeros(self.numStates)
+            for s in range(self.numStates):
+                Q = np.zeros(self.numActions)
+                for a in range(self.numActions):
+                    for sPrime in range(self.numStates):
+                        Q[a] += self.transProb[s][a][sPrime] * (self.rewards[s][a][sPrime] + self.discountFactor * V[sPrime])
+                VNew[s] = np.max(Q)
+            if np.max(np.abs(V - VNew)) < self.tolerance:
+                break
+            V = VNew
+        policy = np.zeros(self.numStates, dtype=int)
+        
+        for s in range(self.numStates):
+            Q = np.zeros(self.numActions)
+            for a in range(self.numActions):
+                for sPrime in range(self.numStates):
+                    Q[a] += self.transProb[s][a][sPrime]*(self.rewards[s][a][sPrime] + self.discountFactor*V[sPrime])
+            policy[s] = np.argmax(Q)
+        return V, policy
+
+numStates = 3
+numActions = 2
+transProb = np.array([[[0.7, 0.3, 0.0],
+                        [0.1, 0.9, 0.0]],
+                    [[0.0, 0.8, 0.2],
+                        [0.0, 0.0, 1.0]],
+                    [[0.8, 0.1, 0.1],
+                        [0.0, 0.0, 1.0]]])
+rewards = np.array([[[1, 0, 0],
+                     [2, 0, 0]],
+                    [[0, 0, 0],
+                     [0, 0, 1]],
+                    [[-1, 0, 0],
+                     [0, 0, -1]]])
+
+mdp = MarkovDecisionProcess(numStates, numActions, transProb, rewards)
+optimalVals, optimalPolicy = mdp.valueIteration()
+
+print("optimal values: ", optimalVals)
+print("optimal policy: ", optimalPolicy)
