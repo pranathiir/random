@@ -1,0 +1,40 @@
+#mandelbrot
+import turtle
+import math
+
+def mandelbrot(z, c, n=20):
+    if abs(z) > 10**12:
+        return float("nan")
+    elif n>0:
+        return mandelbrot(z**2 + c, c, n-1)
+    else:
+        return z**2 + c
+
+screenCoordX, screenCoordY = 800, 600
+complexX, complexY = (-2.0, 2.0), (-1.0, 2.0)
+step = 2
+
+turtle.tracer(0, 0)
+turtle.setup(screenCoordX, screenCoordY)
+screen = turtle.Screen()
+
+screen.bgcolor("black")
+#screen.title("mandelbrot Fractal (discretization step = %d)" % (int(step)))
+mTurtle = turtle.Turtle()
+mTurtle.penup()
+mTurtle.shape("triangle")
+
+pixelToX, pixelToY = (complexX[1] - complexX[0])/screenCoordX, (complexY[1] - complexY[0])/screenCoordY
+
+for px in range(-int(screenCoordX/2), int(screenCoordX/2), int(step)):
+    for py in range(-int(screenCoordY/2), int(screenCoordY/2), int(step)):
+        x, y = px * pixelToX, py*pixelToY
+        m =  mandelbrot(0, x+1j*y)
+        if not math.isnan(m.real):
+            color = [abs(math.sin(m.imag)) for i in range(3)]
+            mTurtle.color(color)
+            mTurtle.dot(2.4, color)
+            mTurtle.goto(px, py)
+    turtle.update()
+
+turtle.mainloop()
