@@ -1,0 +1,102 @@
+#mapping
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+
+def histogramEqualization(image):
+    if len(image.shape) > 2:
+        greyImage = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    else:
+        greyImage = image
+    equalizedImage = cv2.equalizeHist(greyImage)
+    return equalizedImage
+
+ipImage = cv2.imread("/content/images.jpg")
+equalizedImage = histogramEqualization(ipImage)
+inputHist = cv2.calcHist([ipImage], [0], None, [256], [0, 256])
+equalizedHist = cv2.calcHist([equalizedImage], [0], None, [256], [0, 256])
+
+plt.figure(figsize=(12, 6))
+plt.subplot(2, 2, 1)
+plt.imshow(cv2.cvtColor(ipImage, cv2.COLOR_BGR2RGB))
+plt.title('original image')
+plt.axis('off')
+
+plt.subplot(2, 2, 2)
+plt.imshow(equalizedImage, cmap='gray')
+plt.title('equalized image')
+plt.axis('off')
+
+plt.subplot(2, 2, 3)
+plt.plot(inputHist, color='green')
+plt.title('original histogram')
+plt.xlabel('intensity')
+plt.ylabel('frequency')
+
+plt.subplot(2, 2, 4)
+plt.plot(equalizedHist, color='purple')
+plt.title('equalized histogram')
+plt.xlabel('intensity')
+plt.ylabel('frequency')
+
+plt.tight_layout()
+plt.show()
+
+
+#matching
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+
+def histogramMatching(image, referenceHistogram):
+    imageHistogram = cv2.calcHist([image], [0], None, [256], [0, 256])
+    imagecdf = imageHistogram.cumsum()/imageHistogram.sum()
+    referencecdf = referenceHistogram.cumsum()/referenceHistogram.sum()
+    matchedImage = np.interp(image.flatten(), np.arange(256), np.uint8(255 * referencecdf)).reshape(image.shape)
+    matchedImage = np.uint8(matchedImage)
+    matchedHistogram = cv2.calcHist([matchedImage], [0], None, [256], [0, 256])
+
+    return matchedImage, matchedHistogram
+
+ipImage = cv2.imread("/content/images.jpg", cv2.IMREAD_GRAYSCALE)
+targetImage = cv2.imread("/content/images2.jpg", cv2.IMREAD_GRAYSCALE)
+targetHistogram = cv2.calcHist([targetImage], [0], None, [256], [0, 256])
+matchedImage, matchedHistogram = histogramMatching(ipImage, targetHistogram)
+
+plt.figure(figsize=(10, 6))
+
+plt.subplot(2, 3, 1)
+plt.imshow(ipImage, cmap='gray')
+plt.title('original image')
+plt.axis('off')
+
+plt.subplot(2, 3, 2)
+plt.imshow(targetImage, cmap='gray')
+plt.title('target image')
+plt.axis('off')
+
+plt.subplot(2, 3, 3)
+plt.imshow(matchedImage, cmap='gray')
+plt.title('matched image')
+plt.axis('off')
+
+plt.subplot(2, 3, 4)
+plt.plot(targetHistogram, color='orange')
+plt.title('target histogram')
+plt.xlabel('intensity')
+plt.ylabel('frequency')
+
+plt.subplot(2, 3, 5)
+plt.plot(cv2.calcHist([ipImage], [0], None, [256], [0, 256]), color='black')
+plt.title('input histogram')
+plt.xlabel('intensity')
+plt.ylabel('frequency')
+
+plt.subplot(2, 3, 6)
+plt.plot(matchedHistogram, color='teal')
+plt.title('matched histogram')
+plt.xlabel('intensity')
+plt.ylabel('frequency')
+
+plt.tight_layout()
+plt.show()
