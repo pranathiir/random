@@ -1,0 +1,92 @@
+# MAX FILTER
+'''
+import cv2
+import numpy as np
+
+def max_filter(image, kernel_size):
+    kernel = np.ones((kernel_size, kernel_size), np.uint8)
+    return cv2.dilate(image, kernel)
+
+# Example usage
+image = cv2.imread("img.png")
+kernel_size = 5  # Adjust kernel size as needed
+max_filtered_image = max_filter(image, kernel_size)
+cv2.imshow("Max Filtered Image", max_filtered_image)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+'''
+# MEAN FILTER
+import cv2
+from google.colab.patches import cv2_imshow
+'''
+def mean_filter(image, kernel_size):
+    return cv2.blur(image, (kernel_size, kernel_size))
+
+# Example usage
+image = cv2.imread("images.jpg")
+kernel_size = 5  # Adjust kernel size as needed
+mean_filtered_image = mean_filter(image, kernel_size)
+cv2_imshow(mean_filtered_image)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+'''
+# MEDIAN FILTER
+
+#import cv2
+
+def median_filter(image, kernel_size):
+    return cv2.medianBlur(image, kernel_size)
+
+# Example usage
+image = cv2.imread("images.jpg")
+sharpening_kernel = np.array([[-1, -1, -1],
+                             [-1, 9, -1],
+                             [-1, -1, -1]])
+sharpened_image = cv2.filter2D(image, -1, sharpening_kernel)
+cv2_imshow(sharpened_image)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+'''
+kernel_size = 5  # Adjust kernel size as needed
+median_filtered_image = median_filter(image, kernel_size)
+cv2_imshow(median_filtered_image)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+
+# MIN FILTER
+
+import cv2
+import numpy as np
+
+def min_filter(image, kernel_size):
+    kernel = np.ones((kernel_size, kernel_size), np.uint8)
+    return cv2.erode(image, kernel)
+
+# Example usage
+image = cv2.imread("img.png")
+kernel_size = 5  # Adjust kernel size as needed
+min_filtered_image = min_filter(image, kernel_size)
+cv2.imshow("Min Filtered Image", min_filtered_image)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+
+# LOG TRANSFORMATION
+
+import cv2
+import numpy as np
+
+def log_transformation(image):
+    # Normalizing the pixel values
+    normalized_image = cv2.normalize(image, None, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
+    # Applying log transformation
+    transformed_image = np.log1p(normalized_image)
+    # Denormalizing the pixel values
+    transformed_image = cv2.normalize(transformed_image, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+    return transformed_image
+
+# Example usage
+image = cv2.imread("img.png", cv2.IMREAD_GRAYSCALE)
+log_transformed_image = log_transformation(image)
+cv2.imshow("Log Transformed Image", log_transformed_image)
+cv2.waitKey(0)
+cv2.destroyAllWindows()'''
