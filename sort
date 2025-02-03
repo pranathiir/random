@@ -1,0 +1,571 @@
+// Quick Sort
+#include <stdio.h>
+#include <stdlib.h>
+#include <omp.h>
+
+#define SIZE 100000
+
+// QuickSort Partition
+int partition(int arr[], int low, int high) {
+    int pivot = arr[high];
+    int i = low - 1;
+    for (int j = low; j < high; j++) {
+        if (arr[j] < pivot) {
+            i++;
+            int temp = arr[i];
+            arr[i] = arr[j];
+            arr[j] = temp;
+        }
+    }
+    int temp = arr[i + 1];
+    arr[i + 1] = arr[high];
+    arr[high] = temp;
+    return i + 1;
+}
+
+// Sequential QuickSort
+void quicksort_seq(int arr[], int low, int high) {
+    if (low < high) {
+        int pi = partition(arr, low, high);
+        quicksort_seq(arr, low, pi - 1);
+        quicksort_seq(arr, pi + 1, high);
+    }
+}
+
+// Parallel QuickSort
+void quicksort_par(int arr[], int low, int high) {
+    if (low < high) {
+        int pi = partition(arr, low, high);
+
+        #pragma omp parallel sections
+        {
+            #pragma omp section
+            quicksort_par(arr, low, pi - 1);
+
+            #pragma omp section
+            quicksort_par(arr, pi + 1, high);
+        }
+    }
+}
+
+int main() {
+    int arr_seq[SIZE], arr_par[SIZE];
+
+    // Initialize array with random values
+    for (int i = 0; i < SIZE; i++) {
+        arr_seq[i] = arr_par[i] = rand() % 100000;
+    }
+
+    // Sequential QuickSort
+    double seq_start = omp_get_wtime();
+    quicksort_seq(arr_seq, 0, SIZE - 1);
+    double seq_end = omp_get_wtime();
+
+    // Parallel QuickSort
+    double par_start = omp_get_wtime();
+    quicksort_par(arr_par, 0, SIZE - 1);
+    double par_end = omp_get_wtime();
+
+    // Verify correctness
+    int correct = 1;
+    for (int i = 0; i < SIZE; i++) {
+        if (arr_seq[i] != arr_par[i]) {
+            correct = 0;
+            break;
+        }
+    }
+
+    // Print results
+    printf("Sequential QuickSort Time: %.6f seconds\n", seq_end - seq_start);
+    printf("Parallel QuickSort Time:   %.6f seconds\n", par_end - par_start);
+    printf("Correctness Check: %s\n", correct ? "PASS" : "FAIL");
+
+    return 0;
+}
+//----------------------------------------------
+
+// Merge Sort
+#include <stdio.h>
+#include <stdlib.h>
+#include <omp.h>
+
+#define SIZE 100000
+
+// Merge function
+void merge(int arr[], int l, int m, int r) {
+    int n1 = m - l + 1;
+    int n2 = r - m;
+
+    int L[n1], R[n2];
+
+    for (int i = 0; i < n1; i++)
+        L[i] = arr[l + i];
+    for (int j = 0; j < n2; j++)
+        R[j] = arr[m + 1 + j];
+
+    int i = 0, j = 0, k = l;
+    while (i < n1 && j < n2) {
+        if (L[i] <= R[j]) {
+            arr[k] = L[i];
+            i++;
+        } else {
+            arr[k] = R[j];
+            j++;
+        }
+        k++;
+    }
+
+    while (i < n1) {
+        arr[k] = L[i];
+        i++;
+        k++;
+    }
+
+    while (j < n2) {
+        arr[k] = R[j];
+        j++;
+        k++;
+    }
+}
+
+// Sequential MergeSort
+void mergesort_seq(int arr[], int l, int r) {
+    if (l < r) {
+        int m = l + (r - l) / 2;
+        mergesort_seq(arr, l, m);
+        mergesort_seq(arr, m + 1, r);
+        merge(arr, l, m, r);
+    }
+}
+
+// Parallel MergeSort
+void mergesort_par(int arr[], int l, int r) {
+    if (l < r) {
+        int m = l + (r - l) / 2;
+
+        #pragma omp parallel sections
+        {
+            #pragma omp section
+            mergesort_par(arr, l, m);
+
+            #pragma omp section
+            mergesort_par(arr, m + 1, r);
+        }
+
+        merge(arr, l, m, r);
+    }
+}
+
+int main() {
+    int arr_seq[SIZE], arr_par[SIZE];
+
+    // Initialize array with random values
+    for (int i = 0; i < SIZE; i++) {
+        arr_seq[i] = arr_par[i] = rand() % 100000;
+    }
+
+    // Sequential MergeSort
+    double seq_start = omp_get_wtime();
+    mergesort_seq(arr_seq, 0, SIZE - 1);
+    double seq_end = omp_get_wtime();
+
+    // Parallel MergeSort
+    double par_start = omp_get_wtime();
+    mergesort_par(arr_par, 0, SIZE - 1);
+    double par_end = omp_get_wtime();
+
+    // Verify correctness
+    int correct = 1;
+    for (int i = 0; i < SIZE; i++) {
+        if (arr_seq[i] != arr_par[i]) {
+            correct = 0;
+            break;
+        }
+    }
+
+    // Print results
+    printf("Sequential MergeSort Time: %.6f seconds\n", seq_end - seq_start);
+    printf("Parallel MergeSort Time:   %.6f seconds\n", par_end - par_start);
+    printf("Correctness Check: %s\n", correct ? "PASS" : "FAIL");
+
+    return 0;
+}
+//------------------------------------
+// Odd-Even Transposition Sort using OpenMP vs Sequential Bubble Sort
+#include <stdio.h>
+#include <stdlib.h>
+#include <omp.h>
+#include <time.h>
+
+#define SIZE 100000
+
+// Sequential Bubble Sort
+void bubble_sort_sequential(int arr[], int n) {
+    for (int i = 0; i < n - 1; i++) {
+        for (int j = 0; j < n - i - 1; j++) {
+            if (arr[j] > arr[j + 1]) {
+                int temp = arr[j];
+                arr[j] = arr[j + 1];
+                arr[j + 1] = temp;
+            }
+        }
+    }
+}
+
+// Parallel Odd-Even Transposition Sort using OpenMP
+void odd_even_sort_parallel(int arr[], int n) {
+    int is_sorted = 0;
+
+    while (!is_sorted) {
+        is_sorted = 1;
+
+        // Odd phase
+        #pragma omp parallel for schedule(dynamic)
+        for (int i = 1; i < n - 1; i += 2) {
+            if (arr[i] > arr[i + 1]) {
+                int temp = arr[i];
+                arr[i] = arr[i + 1];
+                arr[i + 1] = temp;
+                is_sorted = 0;
+            }
+        }
+
+        // Even phase
+        #pragma omp parallel for schedule(dynamic)
+        for (int i = 0; i < n - 1; i += 2) {
+            if (arr[i] > arr[i + 1]) {
+                int temp = arr[i];
+                arr[i] = arr[i + 1];
+                arr[i + 1] = temp;
+                is_sorted = 0;
+            }
+        }
+    }
+}
+
+int main() {
+    int *arr_seq = (int *)malloc(SIZE * sizeof(int));
+    int *arr_par = (int *)malloc(SIZE * sizeof(int));
+
+    // Initialize the arrays with random values
+    srand(time(NULL));
+    for (int i = 0; i < SIZE; i++) {
+        int value = rand() % 100000;
+        arr_seq[i] = value;
+        arr_par[i] = value;
+    }
+
+    double start, end;
+
+    // Sequential Bubble Sort
+    start = omp_get_wtime();
+    bubble_sort_sequential(arr_seq, SIZE);
+    end = omp_get_wtime();
+    printf("Sequential Bubble Sort Time: %f seconds\n", end - start);
+
+    // Parallel Odd-Even Transposition Sort
+    start = omp_get_wtime();
+    odd_even_sort_parallel(arr_par, SIZE);
+    end = omp_get_wtime();
+    printf("Parallel Odd-Even Sort Time: %f seconds\n", end - start);
+
+    // Verify correctness
+    int correct = 1;
+    for (int i = 0; i < SIZE; i++) {
+        if (arr_seq[i] != arr_par[i]) {
+            correct = 0;
+            break;
+        }
+    }
+
+    printf("Sorting Correct: %s\n", correct ? "Yes" : "No");
+
+    free(arr_seq);
+    free(arr_par);
+
+    return 0;
+}
+
+//----------------------------------------------
+// Radix Sort with OpenMP (Parallelized Counting Sort)
+#include <stdio.h>
+#include <stdlib.h>
+#include <omp.h>
+#include <time.h>
+
+#define SIZE 100000
+#define MAX_DIGIT 10 // For base 10 numbers
+
+// Get the maximum value in the array
+int getMax(int arr[], int n) {
+    int max = arr[0];
+    for (int i = 1; i < n; i++) {
+        if (arr[i] > max)
+            max = arr[i];
+    }
+    return max;
+}
+
+// Sequential Counting Sort (for Radix Sort)
+void countingSort_sequential(int arr[], int n, int exp) {
+    int output[n];
+    int count[MAX_DIG] = {0};
+
+    for (int i = 0; i < n; i++)
+        count[(arr[i] / exp) % 10]++;
+
+    for (int i = 1; i < MAX_DIG; i++)
+        count[i] += count[i - 1];
+
+    for (int i = n - 1; i >= 0; i--) {
+        output[count[(arr[i] / exp) % 10] - 1] = arr[i];
+        count[(arr[i] / exp) % 10]--;
+    }
+
+    for (int i = 0; i < n; i++)
+        arr[i] = output[i];
+}
+
+// Parallel Counting Sort using OpenMP
+void countingSort_parallel(int arr[], int n, int exp) {
+    int output[n];
+    int count[MAX_DIG] = {0};
+
+    // Parallelize counting phase
+    #pragma omp parallel for reduction(+:count[:MAX_DIG])
+    for (int i = 0; i < n; i++) {
+        count[(arr[i] / exp) % 10]++;
+    }
+
+    for (int i = 1; i < MAX_DIG; i++)
+        count[i] += count[i - 1];
+
+    // Parallelize output construction
+    #pragma omp parallel for
+    for (int i = n - 1; i >= 0; i--) {
+        int index = (arr[i] / exp) % 10;
+        #pragma omp critical
+        {
+            output[count[index] - 1] = arr[i];
+            count[index]--;
+        }
+    }
+
+    for (int i = 0; i < n; i++)
+        arr[i] = output[i];
+}
+
+// Sequential Radix Sort
+void radixSort_sequential(int arr[], int n) {
+    int max = getMax(arr, n);
+    for (int exp = 1; max / exp > 0; exp *= 10)
+        countingSort_sequential(arr, n, exp);
+}
+
+// Parallel Radix Sort
+void radixSort_parallel(int arr[], int n) {
+    int max = getMax(arr, n);
+    for (int exp = 1; max / exp > 0; exp *= 10)
+        countingSort_parallel(arr, n, exp);
+}
+
+int main() {
+    int *arr_seq = (int *)malloc(SIZE * sizeof(int));
+    int *arr_par = (int *)malloc(SIZE * sizeof(int));
+
+    srand(time(NULL));
+    for (int i = 0; i < SIZE; i++) {
+        int value = rand() % 100000;
+        arr_seq[i] = value;
+        arr_par[i] = value;
+    }
+
+    double start, end;
+
+    // Sequential Radix Sort
+    start = omp_get_wtime();
+    radixSort_sequential(arr_seq, SIZE);
+    end = omp_get_wtime();
+    printf("Sequential Radix Sort Time: %f seconds\n", end - start);
+
+    // Parallel Radix Sort
+    start = omp_get_wtime();
+    radixSort_parallel(arr_par, SIZE);
+    end = omp_get_wtime();
+    printf("Parallel Radix Sort Time: %f seconds\n", end - start);
+
+    // Verify correctness
+    int correct = 1;
+    for (int i = 0; i < SIZE; i++) {
+        if (arr_seq[i] != arr_par[i]) {
+            correct = 0;
+            break;
+        }
+    }
+
+    printf("Sorting Correct: %s\n", correct ? "Yes" : "No");
+
+    free(arr_seq);
+    free(arr_par);
+
+    return 0;
+}
+
+//--------------------------------------
+// Parallel Heap Sort and Insertion Sort using OpenMP
+#include <stdio.h>
+#include <stdlib.h>
+#include <omp.h>
+#include <time.h>
+
+#define SIZE 100000
+
+// ---------- Heap Sort ---------- //
+
+void heapify(int arr[], int n, int i) {
+    int largest = i;
+    int left = 2 * i + 1;
+    int right = 2 * i + 2;
+
+    if (left < n && arr[left] > arr[largest])
+        largest = left;
+    if (right < n && arr[right] > arr[largest])
+        largest = right;
+
+    if (largest != i) {
+        int temp = arr[i];
+        arr[i] = arr[largest];
+        arr[largest] = temp;
+        heapify(arr, n, largest);
+    }
+}
+
+// Sequential Heap Sort
+void heap_sort_sequential(int arr[], int n) {
+    for (int i = n / 2 - 1; i >= 0; i--)
+        heapify(arr, n, i);
+
+    for (int i = n - 1; i > 0; i--) {
+        int temp = arr[0];
+        arr[0] = arr[i];
+        arr[i] = temp;
+        heapify(arr, i, 0);
+    }
+}
+
+// Parallel Heap Sort
+void heap_sort_parallel(int arr[], int n) {
+    #pragma omp parallel for
+    for (int i = n / 2 - 1; i >= 0; i--)
+        heapify(arr, n, i);
+
+    for (int i = n - 1; i > 0; i--) {
+        int temp = arr[0];
+        arr[0] = arr[i];
+        arr[i] = temp;
+        heapify(arr, i, 0);
+    }
+}
+
+// ---------- Insertion Sort ---------- //
+
+// Sequential Insertion Sort
+void insertion_sort_sequential(int arr[], int n) {
+    for (int i = 1; i < n; i++) {
+        int key = arr[i];
+        int j = i - 1;
+        while (j >= 0 && arr[j] > key) {
+            arr[j + 1] = arr[j];
+            j--;
+        }
+        arr[j + 1] = key;
+    }
+}
+
+// Parallel Insertion Sort with Merging
+void merge(int arr[], int l, int m, int r) {
+    int n1 = m - l + 1;
+    int n2 = r - m;
+
+    int L[n1], R[n2];
+    for (int i = 0; i < n1; i++) L[i] = arr[l + i];
+    for (int j = 0; j < n2; j++) R[j] = arr[m + 1 + j];
+
+    int i = 0, j = 0, k = l;
+    while (i < n1 && j < n2) {
+        if (L[i] <= R[j]) arr[k++] = L[i++];
+        else arr[k++] = R[j++];
+    }
+
+    while (i < n1) arr[k++] = L[i++];
+    while (j < n2) arr[k++] = R[j++];
+}
+
+void insertion_sort_parallel(int arr[], int n) {
+    int num_threads = 4;
+    int chunk_size = n / num_threads;
+
+    #pragma omp parallel for
+    for (int i = 0; i < num_threads; i++) {
+        int start = i * chunk_size;
+        int end = (i == num_threads - 1) ? n : start + chunk_size;
+        insertion_sort_sequential(arr + start, end - start);
+    }
+
+    // Merging sorted chunks
+    for (int size = chunk_size; size < n; size *= 2) {
+        for (int left = 0; left < n - size; left += 2 * size) {
+            int mid = left + size - 1;
+            int right = (left + 2 * size - 1 < n) ? (left + 2 * size - 1) : (n - 1);
+            merge(arr, left, mid, right);
+        }
+    }
+}
+
+// ---------- Main Function ---------- //
+
+int main() {
+    int *arr_seq_heap = (int *)malloc(SIZE * sizeof(int));
+    int *arr_par_heap = (int *)malloc(SIZE * sizeof(int));
+    int *arr_seq_insert = (int *)malloc(SIZE * sizeof(int));
+    int *arr_par_insert = (int *)malloc(SIZE * sizeof(int));
+
+    srand(time(NULL));
+    for (int i = 0; i < SIZE; i++) {
+        int value = rand() % 100000;
+        arr_seq_heap[i] = arr_par_heap[i] = arr_seq_insert[i] = arr_par_insert[i] = value;
+    }
+
+    double start, end;
+
+    // Sequential Heap Sort
+    start = omp_get_wtime();
+    heap_sort_sequential(arr_seq_heap, SIZE);
+    end = omp_get_wtime();
+    printf("Sequential Heap Sort Time: %f seconds\n", end - start);
+
+    // Parallel Heap Sort
+    start = omp_get_wtime();
+    heap_sort_parallel(arr_par_heap, SIZE);
+    end = omp_get_wtime();
+    printf("Parallel Heap Sort Time: %f seconds\n", end - start);
+
+    // Sequential Insertion Sort
+    start = omp_get_wtime();
+    insertion_sort_sequential(arr_seq_insert, SIZE);
+    end = omp_get_wtime();
+    printf("Sequential Insertion Sort Time: %f seconds\n", end - start);
+
+    // Parallel Insertion Sort
+    start = omp_get_wtime();
+    insertion_sort_parallel(arr_par_insert, SIZE);
+    end = omp_get_wtime();
+    printf("Parallel Insertion Sort Time: %f seconds\n", end - start);
+
+    free(arr_seq_heap);
+    free(arr_par_heap);
+    free(arr_seq_insert);
+    free(arr_par_insert);
+
+    return 0;
+}
