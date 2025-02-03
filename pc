@@ -1,0 +1,111 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <omp.h>
+#include <unistd.h>
+
+#define MAX_SIZE 10
+
+// Circular buffer structure
+typedef struct {
+    int buffer[MAX_SIZE];
+    int head;
+    int tail;
+    int size;
+    omp_lock_t lock;
+} CircularBuffer;
+
+// Initialize the circular buffer
+void initBuffer(CircularBuffer* cb) {
+    cb->head = 0;
+    cb->tail = 0;
+    cb->size = 0;
+    omp_init_lock(&cb->lock);
+}
+
+// Destroy the circular buffer
+void destroyBuffer(CircularBuffer* cb) {
+    omp_destroy_lock(&cb->lock);
+}
+
+// Add an item to the buffer
+void addItem(CircularBuffer* cb, int item) {
+    while (1) {
+        omp_set_lock(&cb->lock);
+        if (cb->size < MAX_SIZE) {
+            cb->buffer[cb->tail] = item;
+            cb->tail = (cb->tail + 1) % MAX_SIZE;
+            cb->size++;
+            omp_unset_lock(&cb->lock);
+            return;
+        }
+        omp_unset_lock(&cb->lock);
+        usleep(100); // Sleep for 100 microseconds
+    }
+}
+
+// Remove an item from the buffer
+int removeItem(CircularBuffer* cb) {
+    while (1) {
+        omp_set_lock(&cb->lock);
+        if (cb->size > 0) {
+            int item = cb->buffer[cb->head];
+            cb->head = (cb->head + 1) % MAX_SIZE;
+            cb->size--;
+            omp_unset_lock(&cb->lock);
+            return item;
+        }
+        omp_unset_lock(&cb->lock);
+        usleep(100); // Sleep for 100 microseconds
+    }
+}
+
+// Producer function
+void producer(CircularBuffer* cb, int id, int numItems) {
+    for (int i = 0; i < numItems; i++) {
+        int item = id * 1000 + i;
+        addItem(cb, item);
+        printf("Producer %d produced item %d\n", id, item);
+        usleep(100); // Sleep for 100 microseconds
+    }
+}
+
+// Consumer function
+void consumer(CircularBuffer* cb, int id, int numItems) {
+    for (int i = 0; i < numItems; i++) {
+        int item = removeItem(cb);
+        printf("Consumer %d consumed item %d\n", id, item);
+        usleep(150); // Sleep for 150 microseconds
+    }
+}
+
+int main() {
+    CircularBuffer cb;
+    initBuffer(&cb);
+
+    int numProducers = 2;
+    int numConsumers = 2;
+    int numItems = 5;
+
+    #pragma omp parallel sections
+    {
+        #pragma omp section
+        {
+            producer(&cb, 1, numItems);
+        }
+        #pragma omp section
+        {
+            producer(&cb, 2, numItems);
+        }
+        #pragma omp section
+        {
+            consumer(&cb, 1, numItems);
+        }
+        #pragma omp section
+        {
+            consumer(&cb, 2, numItems);
+        }
+    }
+
+    destroyBuffer(&cb);
+    return 0;
+}
