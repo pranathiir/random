@@ -1,0 +1,67 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <omp.h>
+#include <unistd.h>
+#include <time.h>
+
+#define CHAIRS 3
+int waiting_customers = 0;
+omp_lock_t barber_lock, customer_lock;
+
+void sleeping_barber_sequential() {
+    for (int i = 0; i < 10; i++) {
+        printf("Customer %d is waiting.\n", i);
+        sleep(1);
+
+        printf("Barber is cutting hair.\n");
+        sleep(2);
+    }
+}
+
+void sleeping_barber_parallel() {
+    #pragma omp parallel sections
+    {
+        #pragma omp section
+        {
+            while (1) {
+                omp_set_lock(&barber_lock);
+                if (waiting_customers > 0) {
+                    waiting_customers--;
+                    printf("Barber is cutting hair.\n");
+                    sleep(2);
+                } else {
+                    printf("Barber is sleeping.\n");
+                }
+                omp_unset_lock(&barber_lock);
+                sleep(1);
+            }
+        }
+
+        #pragma omp section
+        {
+            for (int i = 0; i < 10; i++) {
+                omp_set_lock(&customer_lock);
+                if (waiting_customers < CHAIRS) {
+                    waiting_customers++;
+                    printf("Customer %d is waiting.\n", i);
+                } else {
+                    printf("Customer %d left because of no chair.\n", i);
+                }
+                omp_unset_lock(&customer_lock);
+                sleep(1);
+            }
+        }
+    }
+}
+
+int main() {
+    for (int i = 0; i < N; i++) omp_init_lock(&forks[i]);
+    omp_init_lock(&barber_lock);
+
+    clock_t start, end;
+    printf("\nsleeping barber problem:\n");
+    start = clock();
+    sleeping_barber_sequential();
+    end = clock();
+    printf("Sequential Time: %lf seconds\n", (double)(end - start) / CLOCKS_PER_SEC);
+}
