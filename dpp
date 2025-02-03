@@ -1,0 +1,65 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <omp.h>
+
+#define NUM_PHILOSOPHERS 5
+#define THINKING_TIME 1
+#define EATING_TIME 2
+
+omp_lock_t forks[NUM_PHILOSOPHERS];
+
+void think(int philosopher_id) {
+    printf("Philosopher %d is thinking.\n", philosopher_id);
+    sleep(THINKING_TIME);
+}
+
+void eat(int philosopher_id) {
+    printf("Philosopher %d is eating.\n", philosopher_id);
+    sleep(EATING_TIME);
+}
+
+int main() {
+    // Initialize locks for forks
+    for (int i = 0; i < NUM_PHILOSOPHERS; i++) {
+        omp_init_lock(&forks[i]);
+    }
+
+    #pragma omp parallel num_threads(NUM_PHILOSOPHERS)
+    {
+        int philosopher_id = omp_get_thread_num();
+        int left_fork = philosopher_id;
+        int right_fork = (philosopher_id + 1) % NUM_PHILOSOPHERS;
+
+        // Ensure the lower numbered fork is picked up first to prevent deadlock
+        int first_fork = left_fork < right_fork ? left_fork : right_fork;
+        int second_fork = left_fork < right_fork ? right_fork : left_fork;
+
+        while (1) {
+            think(philosopher_id);
+
+            // Pick up the first fork
+            omp_set_lock(&forks[first_fork]);
+            printf("Philosopher %d picked up fork %d.\n", philosopher_id, first_fork);
+
+            // Pick up the second fork
+            omp_set_lock(&forks[second_fork]);
+            printf("Philosopher %d picked up fork %d.\n", philosopher_id, second_fork);
+
+            eat(philosopher_id);
+
+            // Put down the forks
+            omp_unset_lock(&forks[second_fork]);
+            printf("Philosopher %d put down fork %d.\n", philosopher_id, second_fork);
+            omp_unset_lock(&forks[first_fork]);
+            printf("Philosopher %d put down fork %d.\n", philosopher_id, first_fork);
+        }
+    }
+
+    // Destroy locks
+    for (int i = 0; i < NUM_PHILOSOPHERS; i++) {
+        omp_destroy_lock(&forks[i]);
+    }
+
+    return 0;
+}
