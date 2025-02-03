@@ -1,0 +1,60 @@
+// Parallel DFS using OpenMP
+#include <stdio.h>
+#include <stdlib.h>
+#include <omp.h>
+
+#define MAX 100  // Maximum number of vertices
+
+int graph[MAX][MAX]; // Adjacency matrix
+int visited[MAX];    // Visited array
+int V;               // Number of vertices
+// DFS Function
+void dfs(int v) {
+    #pragma omp critical
+    {
+        if (visited[v]) return; // Avoid revisiting nodes
+        visited[v] = 1;
+        printf("Visited %d\n", v);
+    }
+    #pragma omp parallel for
+    for (int i = 0; i < V; i++) {
+        if (graph[v][i] && !visited[i]) {
+            #pragma omp task
+            dfs(i);
+        }
+    }
+    #pragma omp taskwait // Wait for all tasks to complete
+}
+int main() {
+    int E, u, v; // E: number of edges
+    printf("Enter the number of vertices: ");
+    scanf("%d", &V);
+    printf("Enter the number of edges: ");
+    scanf("%d", &E);
+    // Initialize adjacency matrix and visited array
+    for (int i = 0; i < V; i++) {
+        for (int j = 0; j < V; j++) {
+            graph[i][j] = 0;
+        }
+        visited[i] = 0;
+    }
+    // Input edges
+    printf("Enter edges (format: u v):\n");
+    for (int i = 0; i < E; i++) {
+        scanf("%d %d", &u, &v);
+        graph[u][v] = 1;
+        graph[v][u] = 1; // Assuming undirected graph
+    }
+    int start_vertex;
+    printf("Enter the starting vertex for DFS: ");
+    scanf("%d", &start_vertex);
+    double start_time = omp_get_wtime();
+    #pragma omp parallel
+    {
+        #pragma omp single
+        dfs(start_vertex);
+    }
+    double end_time = omp_get_wtime();
+    printf("DFS completed in %f seconds\n", end_time - start_time);
+    return 0;
+}
