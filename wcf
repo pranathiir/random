@@ -1,0 +1,26 @@
+// 1) Word Count in a Large Text File
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include <omp.h>
+
+int word_count(FILE *file) {
+    int count = 0;
+    char ch, prev = ' ';
+    while ((ch = fgetc(file)) != EOF) {
+        if (isspace(ch) && !isspace(prev)) {
+            count++;
+        }
+        prev = ch;
+    }
+    return count;
+}
+
+int main() {
+    FILE *file = fopen("large_text.txt", "r");
+    if (file) {
+        int count = word_count(file);
+        printf("Word Count: %d\n", count);
+        fclose(file);
+    }
+}
