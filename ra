@@ -1,0 +1,128 @@
+#regression analysis
+
+import numpy as np
+import random
+import matplotlib.pyplot as plt
+import scipy.stats
+
+np.random.seed(42)
+days = sorted(random.sample(range(1, 367), 150))
+days = np.array(days, dtype=float)
+
+opening = np.random.uniform(100, 200, len(days))
+closing = opening + np.random.uniform(-10, 10, len(days))
+returns = ((closing - opening)/opening)*100
+
+n = len(days)
+
+sigma_x = np.sum(days)
+sigma_Y = np.sum(returns)
+sigma_Yx = np.sum(days*returns)
+sigma_x2 = np.sum(days**2)
+
+lin_b = (n*sigma_Yx - sigma_x*sigma_Y)/(n*sigma_x2 - sigma_x**2)
+lin_a = (sigma_Y - lin_b*sigma_x)/n
+lin_Y = lin_a + lin_b*days
+lin_errors = returns-lin_Y
+
+sigma_x3 = np.sum(days**3)
+sigma_x4 = np.sum(days**4)
+sigma_x2Y = np.sum((days**2)*returns)
+
+quad_A = np.array([[n, sigma_x, sigma_x2], [sigma_x, sigma_x2, sigma_x3], [sigma_x2, sigma_x3, sigma_x4]])
+quad_B = np.array([sigma_Y, sigma_Yx, sigma_x2Y])
+
+quad_a, quad_b, quad_c = np.linalg.solve(quad_A, quad_B)
+quad_Y = quad_a + quad_b*days + quad_c*days**2
+quad_errors = returns-quad_Y
+
+sigma_x5 = np.sum(days**5)
+sigma_x6 = np.sum(days**6)
+sigma_x3Y = np.sum((days**3)*returns)
+
+cubic_A = np.array([[n, sigma_x, sigma_x2, sigma_x3], [sigma_x, sigma_x2, sigma_x3, sigma_x4], [sigma_x2, sigma_x3, sigma_x4, sigma_x5], [sigma_x3, sigma_x4, sigma_x5, sigma_x6]])
+cubic_B = np.array([sigma_Y, sigma_Yx, sigma_x2Y, sigma_x3Y])
+
+cubic_a, cubic_b, cubic_c, cubic_d = np.linalg.solve(cubic_A, cubic_B)
+cubic_Y = cubic_a + cubic_b*days + cubic_c*days**2 + cubic_d*days**3
+cubic_errors = returns - cubic_Y
+
+def r2(y, y_cap):
+    return 1 - np.sum((y-y_cap)**2)/np.sum((y-np.mean(y))**2)
+
+R2_lin = r2(returns, lin_Y)
+R2_quad = r2(returns, quad_Y)
+R2_cubic = r2(returns, cubic_Y)
+
+print("Linear Regression:     Y = {:.3f} + {:.5f}*t".format(lin_a, lin_b))
+print("Quadratic Regression:  Y = {:.3f} + {:.5f}*t + {:.8f}*t^2".format(quad_a, quad_b, quad_c))
+print("Cubic Regression:      Y = {:.3f} + {:.5f}*t + {:.8f}*t^2 + {:.10f}*t^3".format(cubic_a, cubic_b, cubic_c, cubic_d))
+print("\nR2 Values: ")
+print("Linear     : ", R2_lin)
+print("Quadratic  : ", R2_quad)
+print("Cubic      : ", R2_cubic)
+
+def mse(y, y_hat):
+    return np.mean((y - y_hat)**2)
+
+print("\nError Analysis (MSE): ")
+print("Linear   : ", mse(returns, lin_Y))
+print("Quadratic: ", mse(returns, quad_Y))
+print("Cubic    : ", mse(returns, cubic_Y))
+
+plt.figure(figsize=(12,6))
+plt.scatter(days, returns, label="Actual Returns", color="black")
+plt.plot(days, lin_Y, color="blue", label="Linear Fit")
+plt.plot(days, quad_Y, color="yellow", label="Quadratic Fit")
+plt.plot(days, cubic_Y, color="green", label="Cubic Fit")
+plt.xlabel("Day of Year")
+plt.ylabel("Rate of Return")
+plt.title("Regression Fits of Stock Returns")
+plt.legend()
+plt.grid(True)
+plt.show()
+
+print("\nRegression on errors: ")
+print("Linear fit errors: ", np.mean(lin_errors))
+print("Quadratic fit errors: ", np.mean(quad_errors))
+print("Cubic fit errors: ", np.mean(cubic_errors))
+
+# F-tests for model comparison
+RSS_lin = np.sum(lin_errors**2)
+RSS_quad = np.sum(quad_errors**2)
+RSS_cubic = np.sum(cubic_errors**2)
+
+p_lin = 2
+p_quad = 3
+df1_quad = p_quad - p_lin
+df2_quad = n - p_quad
+F_quad = ((RSS_lin - RSS_quad) / df1_quad) / (RSS_quad / df2_quad)
+pval_quad = 1 - scipy.stats.f.cdf(F_quad, df1_quad, df2_quad)
+
+print("\nF-test for Quadratic vs Linear: F={:.3f}, p-value={:.3f}".format(F_quad, pval_quad))
+
+p_cubic = 4
+df1_cubic = p_cubic - p_quad
+df2_cubic = n - p_cubic
+F_cubic = ((RSS_quad - RSS_cubic) / df1_cubic) / (RSS_cubic / df2_cubic)
+pval_cubic = 1 - scipy.stats.f.cdf(F_cubic, df1_cubic, df2_cubic)
+
+print("F-test for Cubic vs Quadratic: F={:.3f}, p-value={:.3f}".format(F_cubic, pval_cubic))
+
+# Best model recommendation
+print("\nModel Selection:")
+if pval_quad < 0.05:
+    print("Quadratic significantly improves over Linear (p < 0.05).")
+else:
+    print("Quadratic does not significantly improve over Linear (p >= 0.05).")
+if pval_cubic < 0.05:
+    print("Cubic significantly improves over Quadratic (p < 0.05).")
+else:
+    print("Cubic does not significantly improve over Quadratic (p >= 0.05).")
+
+if R2_cubic > R2_quad and R2_cubic > R2_lin and pval_cubic < 0.05:
+    print("Best model: Cubic (highest R² and significant F-test).")
+elif R2_quad > R2_lin and pval_quad < 0.05:
+    print("Best model: Quadratic (highest R² among significant models).")
+else:
+    print("Best model: Linear (no significant improvement from higher-degree models).")
